@@ -51,20 +51,29 @@ class Paper():
                 return resp.json().get('data')[0]   
 
     
+    def merge(self, p, overwrite=None):
+        if not overwrite: overwrite = []
+     
+        for k, v in self.__dict__.items():
+            if not v or k in overwrite:
+                self.__dict__[k] = p.__dict__.get(k)
+            
+        
+    
     def fill_sc(self, doc=None):
         doc = doc or self.search_sc()
 
-        self.title = self.title or doc.get('title')
-        self.abstract = self.abstract or doc.get('abstract')
-        self.citations = self.citations or doc.get('citationCount')
-        self.influential_citations = self.influential_citations or doc.get('influentialCitationCount')
-        self.published = self.published or doc.get('year')
-        self.sc_id = self.sc_id or doc.get('paperId')
-        self.arxiv_id = self.arxiv_id or doc.get('externalIds', {}).get('ArXiv')
-        self.authors = self.authors or self.sc_author_list(doc.get('authors'))
-        self.update_urls(doc.get('url'))
-
-        return self
+        p = Paper()
+        p.title = doc.get('title')
+        p.abstract = doc.get('abstract')
+        p.citations = doc.get('citationCount')
+        p.influential_citations = doc.get('influentialCitationCount')
+        p.published = doc.get('year')
+        p.sc_id = doc.get('paperId')
+        p.arxiv_id = doc.get('externalIds', {}).get('ArXiv')
+        p.authors = p.sc_author_list(doc.get('authors'))
+        p.update_urls(doc.get('url'))
+        return p
 
     def search_arxiv(self):
         pass
@@ -96,19 +105,19 @@ class Paper():
     def fill_pwc(self, doc=None):
         doc = doc or self.search_pwc()
 
-        self.title = self.title or doc.get('title')
-        self.abstract = self.abstract or doc.get('abstract')
-        self.proceeding = self.proceeding or doc.get('proceeding')
-        self.citations = self.citations or doc.get('citations')
-        self.influential_citations = self.influential_citations or doc.get('influential_citations')
-        self.authors = self.authors or doc.get('authors')
-        self.published = self.published or doc.get('published')
-        self.sc_id = self.sc_id or doc.get('id')
-        self.arxiv_id = self.arxiv_id or doc.get('arxiv_id')
-        self.update_urls(doc.get('url_abs'))
-        self.update_urls(doc.get('conference_url_abs'))
-
-        return self
+        p = Paper()
+        p.title = doc.get('title')
+        p.abstract = doc.get('abstract')
+        p.proceeding = doc.get('proceeding')
+        p.citations = doc.get('citations')
+        p.influential_citations = doc.get('influential_citations')
+        p.authors = doc.get('authors')
+        p.published = doc.get('published')
+        p.sc_id = doc.get('id')
+        p.arxiv_id = doc.get('arxiv_id')
+        p.update_urls(doc.get('url_abs'))
+        p.update_urls(doc.get('conference_url_abs'))
+        return p
 
     def search_mendeley_catalog(self, session):
         url = 'https://api.mendeley.com/metadata'
@@ -136,17 +145,18 @@ class Paper():
         doc = doc or self.search_mendeley_catalog(session)
         if type(doc) is not dict:
             doc = vars(doc)
-
-        self.title = self.title or doc.get('title')
-        self.authors = self.authors or self.mendeley_author_list(doc.get('authors'))
-        self.published = self.published or doc.get('year')
-        self.folders = self.folders or self.mendeley_folder_list(doc, fnames)
-        self.abstract = self.abstract or doc.get('abstract')
-        self.mendeley_id = self.mendeley_id or doc.get('id')
-        self.proceeding = self.proceeding or doc.get('source')
-        self.update_urls(doc.get('websites'))
-        self.arxiv_id = self.arxiv_id or doc.get('identifiers', {}).get('arxiv')
-        return self
+        
+        p = Paper()
+        p.title = doc.get('title')
+        p.authors = self.mendeley_author_list(doc.get('authors'))
+        p.published = doc.get('year')
+        p.folders = self.mendeley_folder_list(doc, fnames)
+        p.abstract = doc.get('abstract')
+        p.mendeley_id = doc.get('id')
+        p.proceeding = doc.get('source')
+        p.arxiv_id = doc.get('identifiers', {}).get('arxiv')
+        p.update_urls(doc.get('websites'))
+        return p
 
     def mendeley_author_list(self, authors):
         if not authors: return []
